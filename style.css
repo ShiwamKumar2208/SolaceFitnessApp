@@ -1,0 +1,70 @@
+:root {
+  --bg: #0B0B0B;
+  --text: #FFFFFF;
+  --text-dim: #A0A0A0;
+  --accent: #FF4D00;
+  --accent-light: #FF7A00;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-size: 18px;
+  color: white;
+  background: var(--accent);
+}
+
+.start-btn {
+  width: 70%;
+  height: 140px;
+  font-size: 26px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  box-shadow: 0 0 25px rgba(255, 77, 0, 0.5);
+}
+
+button {
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+button[disabled] {
+  background: #444;
+  cursor: not-allowed;
+}
+
+#splash {
+  position: fixed;
+  inset: 0;
+  background: #0B0B0B;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+#splash h1 {
+  color: #FF4D00;
+  font-size: 42px;
+  letter-spacing: 2px;
+}
