@@ -373,6 +373,22 @@ function completeWorkout() {
 
   save();
 
+  // 🔥 BACKGROUND SYNC (only when workout completes)
+  if ("serviceWorker" in navigator && "SyncManager" in window) {
+    navigator.serviceWorker.ready.then((reg) => {
+      if (reg.active) {
+        reg.active.postMessage({
+          type: "SAVE_WORKOUT",
+          payload: {
+            date: new Date().toISOString(),
+            day: state.day,
+            exercises: todayWorkout.length,
+          },
+        });
+      }
+    });
+  }
+
   app.innerHTML = `
     <div class="container">
       <h1>Workout Complete</h1>
