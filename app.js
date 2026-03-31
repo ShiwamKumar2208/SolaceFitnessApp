@@ -7,6 +7,15 @@ window.addEventListener("load", () => {
 
 let taps = 0;
 
+// EXERCISES = {
+//   warmup: [],
+//   push: [],
+//   legs: [],
+//   core: [],
+//   hiit: [],
+//   stretch: []
+// }
+
 document.addEventListener("click", () => {
   taps++;
   if (taps === 5) {
@@ -152,46 +161,75 @@ function scaleExercise(ex, day) {
   return ex;
 }
 
+function getWorkoutSize(day) {
+  const base = 5;
+
+  // every 5 days → +1 exercise
+  const extra = Math.floor(day / 5);
+
+  return Math.min(base + extra, 20);
+}
+
 function generateWorkout(day) {
+  const size = getWorkoutSize(day);
   const phase = getPhase(day);
+
   let workout = [];
+  let used = new Set();
 
-  workout.push(random(EXERCISES.warmup));
+  function pick(arr) {
+    let ex;
+    let attempts = 0;
 
-  if (phase === "beginner") {
-    workout.push(random(EXERCISES.push));
-    workout.push(random(EXERCISES.legs));
-    workout.push(random(EXERCISES.core));
+    do {
+      ex = random(arr);
+      attempts++;
+    } while (used.has(ex.name) && attempts < 10);
+
+    used.add(ex.name);
+    return ex;
   }
 
-  if (phase === "medium") {
-    workout.push(random(EXERCISES.push));
-    workout.push(random(EXERCISES.legs));
-    workout.push(random(EXERCISES.core));
-    workout.push(random(EXERCISES.hiit));
+  // 🔥 ALWAYS structured base
+  workout.push(pick(EXERCISES.warmup));
+  workout.push(pick(EXERCISES.push));
+  workout.push(pick(EXERCISES.legs));
+  workout.push(pick(EXERCISES.core));
+
+  if (phase !== "beginner") {
+    workout.push(pick(EXERCISES.hiit));
   }
 
-  if (phase === "hard" || phase === "infinite") {
-    workout.push(random(EXERCISES.push));
-    workout.push(random(EXERCISES.legs));
-    workout.push(random(EXERCISES.core));
-    workout.push(random(EXERCISES.hiit));
-    workout.push(random(EXERCISES.hiit));
+  // 🔥 EXTRA FILL (smart rotation)
+  const extraPools = [
+    EXERCISES.push,
+    EXERCISES.legs,
+    EXERCISES.core,
+    EXERCISES.hiit,
+  ];
+
+  let i = 0;
+
+  while (workout.length < size - 1) {
+    const pool = extraPools[i % extraPools.length];
+    workout.push(pick(pool));
+    i++;
   }
 
-  workout.push(random(EXERCISES.stretch));
+  // 🔥 ALWAYS end with stretch
+  workout.push(pick(EXERCISES.stretch));
 
   return workout.map((ex) => scaleExercise(ex, day));
 }
 
 function getTodayWorkout() {
-  const key = "workout-" + state.day;
+  const key = "current-workout";
 
-  let saved = localStorage.getItem(key);
+  let saved = sessionStorage.getItem(key);
   if (saved) return JSON.parse(saved);
 
   const workout = generateWorkout(state.day);
-  localStorage.setItem(key, JSON.stringify(workout));
+  sessionStorage.setItem(key, JSON.stringify(workout));
 
   return workout;
 }
@@ -372,6 +410,7 @@ function completeWorkout() {
   state.lastWorkoutDate = today;
 
   save();
+  sessionStorage.removeItem("current-workout");
 
   // 🔥 BACKGROUND SYNC (only when workout completes)
   if ("serviceWorker" in navigator && "SyncManager" in window) {
