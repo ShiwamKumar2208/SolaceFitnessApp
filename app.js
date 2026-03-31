@@ -257,6 +257,7 @@ function renderHome() {
 }
 
 function startWorkout() {
+  // sessionStorage.removeItem("current-workout");
   index = 0;
   paused = false;
   mode = "ready";

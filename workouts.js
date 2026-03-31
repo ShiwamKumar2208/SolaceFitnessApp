@@ -56,7 +56,7 @@ const EXERCISES = {
       name: "Incline Pushups",
       reps: 12,
       level: "beginner",
-      img: "images/incline_pushups.png",
+      img: "images/incline_pushup.png",
       video: "https://www.youtube.com/watch?v=cfns6h1c5os"
     },
 
@@ -64,7 +64,7 @@ const EXERCISES = {
       name: "Decline Pushups",
       reps: 12,
       level: "medium",
-      img: "images/decline_pushups.png",
+      img: "images/decline_pushup.png",
       video: "https://www.youtube.com/watch?v=SKPab2YC8iI"
     },
     {
@@ -75,7 +75,7 @@ const EXERCISES = {
       video: "https://www.youtube.com/watch?v=J0DnG1_S92I"
     },
     {
-      name: "Wide Pushups",
+      name: "Wide Arm Pushups",
       reps: 12,
       level: "medium",
       img: "images/wide_pushups.png",
@@ -142,7 +142,13 @@ const EXERCISES = {
       img: "images/wall_sit.png",
       video: "https://www.youtube.com/watch?v=y-wV4Venusw"
     },
-
+    {
+      name: "Vertical Leap",
+      rep: 15,
+      level: "medium",
+      img: "images/vertical_leap.png",
+      video: "https://www.youtube.com/watch?v=j260zYfRz8Q"
+    },
     {
       name: "Pistol Squats",
       reps: 5,
