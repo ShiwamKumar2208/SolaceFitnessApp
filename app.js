@@ -19,9 +19,15 @@ document.addEventListener("click", () => {
 
 const app = document.getElementById("app");
 
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
+
 let state = JSON.parse(localStorage.getItem("solace")) || {
   day: 1,
   streak: 0,
+  lastWorkoutDate: null,
+  workoutsDone: 0,
 };
 
 function save() {
@@ -63,14 +69,50 @@ function random(arr) {
 
 function togglePause() {
   if (mode === "paused") {
-    mode = "running";
     paused = false;
-  } else if (mode === "running") {
-    mode = "paused";
+
+    // restore previous mode
+    mode = timeLeft > 0 ? modeBeforePause || "running" : "running";
+  } else {
+    modeBeforePause = mode; // 🔥 store where we came from
     paused = true;
+    mode = "paused";
   }
 
-  renderExercise(todayWorkout[index]);
+  // 🔥 render based on actual context
+  if (modeBeforePause === "rest") {
+    renderRestUI();
+  } else {
+    renderExercise(todayWorkout[index]);
+  }
+}
+
+function renderRestUI() {
+  const current = todayWorkout[index];
+  const next = todayWorkout[index + 1] || { name: "Finish" };
+
+  const progress = ((index + 1) / todayWorkout.length) * 100;
+
+  app.innerHTML = `
+    <div class="container">
+      <h2>Rest</h2>
+
+      <p>Done: ${current.name}</p>
+      <p style="color: var(--accent)">Next: ${next.name}</p>
+
+      <div style="width:80%;height:10px;background:#222;border-radius:10px;">
+        <div style="width:${progress}%;height:100%;background:var(--accent);border-radius:10px;"></div>
+      </div>
+
+      <p id="timer">${timeLeft} sec</p>
+
+      <button onclick="skipRest()">SKIP</button>
+
+      <button onclick="togglePause()">
+        ${paused ? "UNPAUSE" : "PAUSE"}
+      </button>
+    </div>
+  `;
 }
 
 function skipRest() {
@@ -154,7 +196,6 @@ function getTodayWorkout() {
   return workout;
 }
 
-
 // ----------------------
 // UI
 
@@ -165,13 +206,16 @@ function renderHome() {
   totalExercises = todayWorkout.length;
 
   app.innerHTML = `
-    <div class="container">
-      <h1>Day ${state.day} / 90</h1>
-      <p>${totalExercises} exercises</p>
-      <p style="color: var(--accent)">🔥 Streak: ${state.streak}</p>
-      <button class="start-btn" onclick="startWorkout()">START</button>
-    </div>
-  `;
+  <div class="container">
+    <h1>Day ${state.day} / 90</h1>
+    <p>${totalExercises} exercises</p>
+
+    <p style="color: var(--accent)">🔥 Streak: ${state.streak}</p>
+    <p>🏋️ ${state.workoutsDone} workouts</p>
+
+    <button class="start-btn" onclick="startWorkout()">START</button>
+  </div>
+`;
 }
 
 function startWorkout() {
@@ -281,36 +325,9 @@ function startTimer(callback) {
 
 function startRest() {
   mode = "rest";
-
-  const current = todayWorkout[index];
-  const next = todayWorkout[index + 1] || { name: "Finish" };
-
   timeLeft = REST_TIME;
 
-  const progress = ((index + 1) / todayWorkout.length) * 100;
-
-  app.innerHTML = `
-    <div class="container">
-      <h2>Rest</h2>
-
-      <p>Done: ${current.name}</p>
-      <p style="color: var(--accent)">Next: ${next.name}</p>
-
-      <div style="width:80%;height:10px;background:#222;border-radius:10px;">
-        <div style="width:${progress}%;height:100%;background:var(--accent);border-radius:10px;"></div>
-      </div>
-
-      <p id="timer">${timeLeft} sec</p>
-
-      <button onclick="skipRest()">SKIP</button>
-
-      <button onclick="togglePause()" ${
-        paused ? "" : ""
-      }>
-        ${paused ? "UNPAUSE" : "PAUSE"}
-      </button>
-    </div>
-  `;
+  renderRestUI();
 
   startTimer(() => {
     index++;
@@ -332,20 +349,50 @@ function completeWorkout() {
   beep();
   speak("Workout complete");
 
-  state.streak++;
+  const today = getToday();
+
+  if (state.lastWorkoutDate) {
+    const last = new Date(state.lastWorkoutDate);
+    const diff = (new Date(today) - last) / (1000 * 60 * 60 * 24);
+
+    if (diff === 1) {
+      state.streak++; // continued
+    } else if (diff > 1) {
+      state.streak = 1; // broke streak
+    }
+    // same day → no streak change
+  } else {
+    state.streak = 1;
+  }
+
+  // ✅ increment workout count always
+  state.workoutsDone++;
+
+  // ✅ update last workout date
+  state.lastWorkoutDate = today;
+
   save();
 
   app.innerHTML = `
     <div class="container">
-      <h1>Day Complete</h1>
-      <p style="color: var(--accent)">🔥 Streak: ${state.streak}</p>
+      <h1>Workout Complete</h1>
+      <p>🔥 Streak: ${state.streak}</p>
+      <p>🏋️ Workouts: ${state.workoutsDone}</p>
       <button onclick="done()">DONE</button>
     </div>
   `;
 }
 
 function done() {
-  state.day++;
+  const today = getToday();
+
+  // only increase day if it's a new day
+  if (state.lastWorkoutDate === today) {
+    // already counted today → do nothing
+  } else {
+    state.day++;
+  }
+
   save();
   renderHome();
 }
